@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app">
+<head>
+    <meta charset="UTF-8">
+    <title>CSRF test</title>
+    {% load staticfiles %}
+    <script src='{% static "jquery-2.1.4.min.js" %}'></script>
+    <script src='{% static "angular.min.js" %}'></script>
+</head>
+<body ng-controller="ctrl">
+<button id="deleteAllCookies" ng-click="deleteAllCookies()">deleteAllCookies</button>
+<button id="posttest" ng-click="posttest()">post test</button>
+<button id="setCookie" ng-click="setCookie()">set cookie</button>
+<br>
+cookie(empty means empty):
+{[{ cookie }]}
+<script>
+    /**
+     * Created by liuzheng on
+     */
+    'use strict';
+    var app = angular.module('app', []);
+    app.config(function ($interpolateProvider) {
+        $interpolateProvider.startSymbol('{[{');
+        $interpolateProvider.endSymbol('}]}');
+    });
+    app.config(['$httpProvider', function ($httpProvider) {
+        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+    }]);
+    app.controller('ctrl', function ($scope, $http) {
+        $scope.cookie = document.cookie;
+        $scope.posttest = function () {
+            $http.post('/', {'data': 'aa'}).success(function (data) {
+                alert("post success")
+            }).error(function (data, status) {
+                alert("post failed " + status)
+            });
+        };
+        $scope.setCookie = function () {
+            document.cookie = "csrftoken=bbbbbb";
+            $scope.cookie = document.cookie;
+
+        };
+        $scope.deleteAllCookies = function () {
+            var cookies = document.cookie.split(";");
+
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i];
+                var eqPos = cookie.indexOf("=");
+                var name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            }
+            $scope.cookie = document.cookie;
+
+        }
+    });
+</script>
+</body>
+</html>
